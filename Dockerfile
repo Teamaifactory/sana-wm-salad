@@ -23,8 +23,9 @@ RUN printf '%s\n' \
 'echo "Starting SANA-WM setup on SaladCloud..."' \
 'cd /workspace/Sana' \
 'source /opt/conda/etc/profile.d/conda.sh' \
-'echo "Checking conda..."' \
-'conda --version' \
+'echo "Accepting Conda terms..."' \
+'conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true' \
+'conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true' \
 'echo "Starting official Sana installer..."' \
 'bash ./environment_setup.sh sana' \
 'INSTALL_RESULT=$?' \
