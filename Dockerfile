@@ -21,14 +21,16 @@ WORKDIR /workspace/Sana
 
 RUN bash ./environment_setup.sh sana
 
-RUN echo '#!/bin/bash
-source /opt/conda/etc/profile.d/conda.sh
-conda activate sana
-echo "SANA-WM container started"
-python - <<PY
-import torch
-print("CUDA available:", torch.cuda.is_available())
-PY
-sleep infinity' > /start.sh && chmod +x /start.sh
+RUN printf '%s\n' \
+'#!/bin/bash' \
+'source /opt/conda/etc/profile.d/conda.sh' \
+'conda activate sana' \
+'echo "SANA-WM container started"' \
+'python - <<PY' \
+'import torch' \
+'print("CUDA available:", torch.cuda.is_available())' \
+'PY' \
+'sleep infinity' \
+> /start.sh && chmod +x /start.sh
 
 CMD ["/start.sh"]
