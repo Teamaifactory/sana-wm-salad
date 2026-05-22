@@ -20,15 +20,18 @@ RUN git clone https://github.com/NVlabs/Sana.git
 
 RUN printf '%s\n' \
 '#!/bin/bash' \
-'set -e' \
 'echo "Starting SANA-WM setup on SaladCloud..."' \
 'cd /workspace/Sana' \
 'source /opt/conda/etc/profile.d/conda.sh' \
-'if conda env list | awk "{print \$1}" | grep -qx "sana"; then' \
-'  echo "SANA environment already exists. Skipping install."' \
-'else' \
-'  echo "Installing SANA-WM now. This can take a while on first start."' \
-'  bash ./environment_setup.sh sana' \
+'echo "Checking conda..."' \
+'conda --version' \
+'echo "Starting official Sana installer..."' \
+'bash ./environment_setup.sh sana' \
+'INSTALL_RESULT=$?' \
+'if [ "$INSTALL_RESULT" -ne 0 ]; then' \
+'  echo "SANA-WM INSTALL FAILED."' \
+'  echo "The container will stay alive so you can read the logs."' \
+'  sleep infinity' \
 'fi' \
 'conda activate sana' \
 'echo "SANA-WM container is ready."' \
