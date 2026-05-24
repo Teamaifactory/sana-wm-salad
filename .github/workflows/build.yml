@@ -1,14 +1,15 @@
-name: Build Sana WM Salad Image
+name: Build SANA-WM Demo Image
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
   packages: write
+
+concurrency:
+  group: sana-wm-demo-build
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -18,15 +19,14 @@ jobs:
       - name: Get files
         uses: actions/checkout@v4
 
-      - name: Set image names
+      - name: Set image name
         id: image
         run: |
           BASE_IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
-          echo "latest=$BASE_IMAGE:latest" >> "$GITHUB_OUTPUT"
-          echo "tosfix=$BASE_IMAGE:tosfix1" >> "$GITHUB_OUTPUT"
-          echo "Using image: $BASE_IMAGE"
+          echo "demo=$BASE_IMAGE:demo1" >> "$GITHUB_OUTPUT"
+          echo "Using image: $BASE_IMAGE:demo1"
 
-      - name: Set up builder
+      - name: Set up Docker builder
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub container storage
@@ -36,12 +36,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish image
+      - name: Build and publish demo image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: |
-            ${{ steps.image.outputs.latest }}
-            ${{ steps.image.outputs.tosfix }}
+          tags: ${{ steps.image.outputs.demo }}
           provenance: false
