@@ -18,12 +18,13 @@ jobs:
       - name: Get files
         uses: actions/checkout@v4
 
-      - name: Set lowercase image name
+      - name: Set image names
         id: image
         run: |
-          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY,,}:latest"
-          echo "image=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
-          echo "Using image: $IMAGE_NAME"
+          BASE_IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "latest=$BASE_IMAGE:latest" >> "$GITHUB_OUTPUT"
+          echo "tosfix=$BASE_IMAGE:tosfix1" >> "$GITHUB_OUTPUT"
+          echo "Using image: $BASE_IMAGE"
 
       - name: Set up builder
         uses: docker/setup-buildx-action@v3
@@ -40,5 +41,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.image.outputs.image }}
+          tags: |
+            ${{ steps.image.outputs.latest }}
+            ${{ steps.image.outputs.tosfix }}
           provenance: false
