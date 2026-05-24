@@ -1,6 +1,7 @@
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
 SHELL ["/bin/bash", "-lc"]
 
 RUN apt-get update && apt-get install -y \
@@ -14,6 +15,9 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 
 ENV PATH=/opt/conda/bin:$PATH
 
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true
+RUN conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true
+
 WORKDIR /workspace
 
 RUN git clone https://github.com/NVlabs/Sana.git
@@ -23,6 +27,7 @@ RUN printf '%s\n' \
 'echo "Starting SANA-WM setup on SaladCloud..."' \
 'cd /workspace/Sana' \
 'source /opt/conda/etc/profile.d/conda.sh' \
+'export CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes' \
 'echo "Accepting Conda terms..."' \
 'conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main || true' \
 'conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r || true' \
