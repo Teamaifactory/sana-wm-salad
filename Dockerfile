@@ -4,6 +4,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
 ENV PYTHONUNBUFFERED=1
 ENV HF_HOME=/workspace/.cache/huggingface
+ENV MAX_JOBS=2
+ENV NVCC_THREADS=1
 
 SHELL ["/bin/bash", "-lc"]
 
@@ -24,11 +26,13 @@ RUN git clone https://github.com/NVlabs/Sana.git
 
 RUN printf '%s\n' \
 '#!/bin/bash' \
-'echo "Starting SANA-WM full loop test: generate video + upload to R2..."' \
+'echo "Starting SANA-WM full loop test v2: generate video + upload to R2..."' \
 'cd /workspace/Sana' \
 'source /opt/conda/etc/profile.d/conda.sh' \
 'export CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes' \
 'export HF_HOME=/workspace/.cache/huggingface' \
+'export MAX_JOBS=2' \
+'export NVCC_THREADS=1' \
 'echo "Checking required R2 environment variables..."' \
 'for VAR in R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_ACCOUNT_ID R2_BUCKET R2_ENDPOINT; do' \
 '  if [ -z "${!VAR}" ]; then' \
@@ -69,7 +73,7 @@ RUN printf '%s\n' \
 'd = ImageDraw.Draw(img)' \
 'd.ellipse((520, 230, 760, 470), fill=(90, 150, 110))' \
 'd.rectangle((0, 500, 1280, 704), fill=(35, 70, 45))' \
-'d.text((40, 40), "SANA-WM R2 full loop test", fill=(255, 255, 255))' \
+'d.text((40, 40), "SANA-WM R2 full loop test v2", fill=(255, 255, 255))' \
 'img.save("/workspace/test/start.png")' \
 'open("/workspace/test/prompt.txt", "w").write("A calm cinematic scene of a small green turtle standing in a forest clearing, soft morning light, realistic, peaceful atmosphere.")' \
 'np.save("/workspace/test/intrinsics.npy", np.array([1000.0, 1000.0, 640.0, 352.0], dtype=np.float32))' \
@@ -100,14 +104,15 @@ RUN printf '%s\n' \
 '  echo "No MP4 file found. Cannot upload to R2."' \
 '  sleep infinity' \
 'fi' \
+'export MP4_FILE' \
 'echo "MP4 file found: $MP4_FILE"' \
 'echo "Uploading video and metadata to Cloudflare R2..."' \
 'python - <<PY' \
 'import os, json, time, boto3' \
 'from botocore.client import Config' \
-'mp4_file = os.environ.get("MP4_FILE")' \
-'if not mp4_file or not os.path.exists(mp4_file):' \
-'    raise SystemExit("MP4_FILE missing or does not exist")' \
+'mp4_file = os.environ["MP4_FILE"]' \
+'if not os.path.exists(mp4_file):' \
+'    raise SystemExit("MP4 file does not exist: " + mp4_file)' \
 'bucket = os.environ["R2_BUCKET"]' \
 'endpoint = os.environ["R2_ENDPOINT"]' \
 'access_key = os.environ["R2_ACCESS_KEY_ID"]' \
@@ -115,19 +120,12 @@ RUN printf '%s\n' \
 'job_id = "sana-wm-smoke-r2-" + time.strftime("%Y%m%d-%H%M%S")' \
 'video_key = f"videos/sana-wm/outputs/{job_id}/smoke.mp4"' \
 'meta_key = f"learning/job-history/{job_id}.json"' \
-'s3 = boto3.client(' \
-'    "s3",' \
-'    endpoint_url=endpoint,' \
-'    aws_access_key_id=access_key,' \
-'    aws_secret_access_key=secret_key,' \
-'    config=Config(signature_version="s3v4"),' \
-'    region_name="auto"' \
-')' \
+'s3 = boto3.client("s3", endpoint_url=endpoint, aws_access_key_id=access_key, aws_secret_access_key=secret_key, config=Config(signature_version="s3v4"), region_name="auto")' \
 's3.upload_file(mp4_file, bucket, video_key, ExtraArgs={"ContentType": "video/mp4"})' \
 'metadata = {' \
 '    "job_id": job_id,' \
 '    "model": "SANA-WM",' \
-'    "test_type": "tiny smoke test",' \
+'    "test_type": "tiny full loop R2 smoke test",' \
 '    "video_key": video_key,' \
 '    "prompt": "A calm cinematic scene of a small green turtle standing in a forest clearing, soft morning light, realistic, peaceful atmosphere.",' \
 '    "action": "w-8",' \
@@ -135,11 +133,7 @@ RUN printf '%s\n' \
 '    "status": "uploaded_to_r2"' \
 '}' \
 's3.put_object(Bucket=bucket, Key=meta_key, Body=json.dumps(metadata, indent=2), ContentType="application/json")' \
-'url = s3.generate_presigned_url(' \
-'    "get_object",' \
-'    Params={"Bucket": bucket, "Key": video_key},' \
-'    ExpiresIn=604800' \
-')' \
+'url = s3.generate_presigned_url("get_object", Params={"Bucket": bucket, "Key": video_key}, ExpiresIn=604800)' \
 'print("R2_UPLOAD_SUCCESS")' \
 'print("R2_VIDEO_KEY=" + video_key)' \
 'print("R2_METADATA_KEY=" + meta_key)' \
