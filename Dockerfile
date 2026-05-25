@@ -24,7 +24,7 @@ RUN git clone https://github.com/NVlabs/Sana.git
 
 RUN printf '%s\n' \
 '#!/bin/bash' \
-'echo "Starting SANA-WM demo smoke test..."' \
+'echo "Starting SANA-WM demo smoke test v2..."' \
 'cd /workspace/Sana' \
 'source /opt/conda/etc/profile.d/conda.sh' \
 'export CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes' \
@@ -39,11 +39,14 @@ RUN printf '%s\n' \
 '  bash ./environment_setup.sh sana' \
 'fi' \
 'conda activate sana' \
-'echo "Checking GPU..."' \
+'echo "Installing missing MP4 helper packages..."' \
+'pip install imageio imageio-ffmpeg' \
 'python - <<PY' \
 'import torch' \
+'import imageio.v3 as iio' \
 'print("CUDA available:", torch.cuda.is_available())' \
 'print("GPU:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none")' \
+'print("imageio import: OK")' \
 'PY' \
 'echo "Creating test image, prompt, and camera intrinsics..."' \
 'mkdir -p /workspace/test /workspace/results' \
