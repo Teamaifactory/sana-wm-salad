@@ -23,8 +23,8 @@ jobs:
         id: image
         run: |
           BASE_IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
-          echo "demo=$BASE_IMAGE:demo1" >> "$GITHUB_OUTPUT"
-          echo "Using image: $BASE_IMAGE:demo1"
+          echo "demo=$BASE_IMAGE:demo2" >> "$GITHUB_OUTPUT"
+          echo "Using image: $BASE_IMAGE:demo2"
 
       - name: Set up Docker builder
         uses: docker/setup-buildx-action@v3
