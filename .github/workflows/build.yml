@@ -1,4 +1,4 @@
-name: Build SANA-WM Full Loop R2 Image
+name: Build Reusable SANA-WM Job Worker
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: sana-wm-full-loop-r2-build
+  group: sana-wm-job-worker-build
   cancel-in-progress: true
 
 jobs:
@@ -23,8 +23,8 @@ jobs:
         id: image
         run: |
           BASE_IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
-          echo "e2e=$BASE_IMAGE:demo-r2-2" >> "$GITHUB_OUTPUT"
-          echo "Using image: $BASE_IMAGE:demo-r2-2"
+          echo "worker=$BASE_IMAGE:job-worker-1" >> "$GITHUB_OUTPUT"
+          echo "Using image: $BASE_IMAGE:job-worker-1"
 
       - name: Set up Docker builder
         uses: docker/setup-buildx-action@v3
@@ -36,10 +36,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and publish full loop image
+      - name: Build and publish reusable worker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.image.outputs.e2e }}
+          tags: ${{ steps.image.outputs.worker }}
           provenance: false
